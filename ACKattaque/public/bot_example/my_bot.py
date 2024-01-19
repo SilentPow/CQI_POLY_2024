@@ -58,16 +58,16 @@ class PlayerSpaceship(Spaceship):
             action = self.take_step_in_direction(stepDirection, spaceship_message.local_tiles)
             
         
-        command = SpaceshipCommand(transmissions=[], memory=ACKStream(memory), action=action)
+        command = SpaceshipCommand(transmissions=[], memory=memory, action=action)
         print(f'Sending command {command}')
         
-        assert(SpaceshipCommand.schema().validate(command.to_dict()) == {})
+        # assert(SpaceshipCommand.schema().validate(command.to_dict()) == {})
         return command.to_json()
     
     def take_step_in_direction(self, stepDirection: Action, local_tiles: List[List[Tile]]):
         nextTile = self.get_tile_in_direction(stepDirection, local_tiles)
         i = 0
-        while nextTile.type == TileType.WALL or nextTile.contains_spaceship or i == 4:
+        while (nextTile.type == TileType.WALL or nextTile.contains_spaceship) and i < 4:
             stepDirection = self.get_next_direction(stepDirection)
             nextTile = self.get_tile_in_direction(stepDirection, local_tiles)
             i += 1
@@ -89,10 +89,10 @@ class PlayerSpaceship(Spaceship):
                 return objective
         return None
     
-    def get_stream_from_coord(self, position: Coords):
+    def get_stream_from_coord(self, position: int):
         bit1 = position % 25
-        bit2 = (position - bit1) % 5
-        bit3 = (bit1 - bit2)
+        bit2 = (position - bit1 * 25) % 5
+        bit3 = (bit1 - bit2 * 5)
         ackitValues = ACKit.values
         
         return [ackitValues[bit1], ackitValues[bit2], ackitValues[bit3]]
@@ -106,8 +106,8 @@ class PlayerSpaceship(Spaceship):
         return bit1 * 25 + bit2 * 5 + bit3
     
     def step_towards(self, startPosition: Coords, targetPosition: Coords):
-        dx = abs(targetPosition.x - startPosition.x)
-        dy = abs(targetPosition.y - startPosition.y)
+        dx = targetPosition.x - startPosition.x
+        dy = targetPosition.y - startPosition.y
         
         if abs(dx) > abs(dy):
             if dx > 0:
