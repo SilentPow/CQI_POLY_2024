@@ -148,11 +148,44 @@ class PlayerSpaceship(Spaceship):
     
         
     def get_command_albatross(self, spaceship_message: SpaceshipMessage):
+        gps = None
+        if not spaceship_message.can_see_landmark and len(spaceship_message.memory.value) == 0:
+                action = self.make_random_choice()
+        if not spaceship_message.carries_payload:
+            if spaceship_message.can_see_landmark:
+                gps = self.find_landmark(spaceship_message)
+                destination = self.get_closest_obj()
+                self.write_memory(gps, destination)
+            
+            action = self.find_action_from_mem()
+            
+            if action == Action.PICKUP:
+                new_destination = self.get_obj_dest()
+                old_destination = self.get_old_dest()
+                self.write_memory(old_destination, new_destination)
+            
+        else:
+            if spaceship_message.can_see_landmark:
+                gps = self.find_landmark(spaceship_message)
+                destination = self.get_old_dest()
+                self.write_memory(gps, destination)
+                
+            action = self.find_action_from_mem()
+            
+            if action == Action.PICKUP:
+                new_destination = self.get_obj_dest()
+                old_destination = self.get_old_dest()
+                self.write_memory(old_destination, new_destination)
+            
+            
+            
         
-        
-        
-        
-        action = self.find_landmark(spaceship_message)
+          
+        if not spaceship_message.carries_payload and not spaceship_message.local_tiles[3][3].contains_pickup:
+            find_closest_payload()
+        elif spaceship_message.local_tiles[3][3].contains_pickup:
+            get_distance_from_end()
+            
         command = SpaceshipCommand(transmissions=[], memory=ACKStream([]), action=action)
         print(f'Sending command {command}')
 
@@ -160,11 +193,8 @@ class PlayerSpaceship(Spaceship):
         return command.to_json()
 
     def find_landmark(self, spaceship_message: SpaceshipMessage):
-        if spaceship_message.can_see_landmark:
-            gps_coords = self.calculate_gps(spaceship_message.local_tiles)
-            
-        else:
-            action = random.choice((Action.NORTH, Action.WEST, Action.EAST))
+        gps_coords = self.calculate_gps(spaceship_message.local_tiles)
+        return gps_coords
             
     def calculate_gps(self, local_tiles: List[List[Tile]]):
         for i in range(len(local_tiles)):
@@ -181,7 +211,31 @@ class PlayerSpaceship(Spaceship):
                     
         return None
   
+    def write_memory(self, gps: Coords, destination: Coords):
+        xPos = self.get_stream_from_coord(destination.x)
+        yPos = self.get_stream_from_coord(destination.y)
+        xPos.extend(yPos)
+        xDir = (destination.x - gps.x)
+        yDir = destination.y - gps.y 
         
+        if xDir > 0:
+            xPos.append(ACKConverter.number_to_ackit(0))
+        elif xDir < 0:
+            xPos.append(ACKConverter.number_to_ackit(1))
+        else:
+            xPos.append(ACKConverter.number_to_ackit(2))
+            
+        if yDir > 0:
+            xPos.append(ACKConverter.number_to_ackit(0))
+        elif yDir < 0:
+            xPos.append(ACKConverter.number_to_ackit(1))
+        else:
+            xPos.append(ACKConverter.number_to_ackit(2))
+
+        return xPos
+        
+    
+      
 class PlayerTower(Tower):
     def send_messages(self, game_message: str) -> str:
         ######## Keep these lines #########
