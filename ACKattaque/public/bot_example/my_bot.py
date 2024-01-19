@@ -34,10 +34,12 @@ class PlayerSpaceship(Spaceship):
         memory = spaceship_message.memory
         action = None
         
-        if spaceship_message.local_tiles[1][1].contains_pickup:
+        if spaceship_message.local_tiles[1][1].contains_pickup and not spaceship_message.carries_payload:
             action = Action.PICKUP
-            memory[:3] = self.get_stream_from_coord(spaceship_message.gps.x)
-            memory[3:6] = self.get_stream_from_coord(spaceship_message.gps.y)
+            memoryList = memory.value
+            memoryList[:3] = self.get_stream_from_coord(spaceship_message.gps.x)
+            memoryList[3:6] = self.get_stream_from_coord(spaceship_message.gps.y)
+            memory = memoryList
             print(f"Memory: {memory}")
         elif spaceship_message.local_tiles[1][1].contains_dropoff:
             print(f"Drop")
@@ -50,8 +52,8 @@ class PlayerSpaceship(Spaceship):
             action = self.take_step_in_direction(stepDirection, spaceship_message.local_tiles)
             print(f"Action: {action}")
         else:
-            currentObjectiveStartX = self.get_coord_from_stream(memory[:3])
-            currentObjectiveStartY = self.get_coord_from_stream(memory[3:6])
+            currentObjectiveStartX = self.get_coord_from_stream(memory.value[:3])
+            currentObjectiveStartY = self.get_coord_from_stream(memory.value[3:6])
             currentObjective: Objective = self.get_objective_from_start_position(Coords(currentObjectiveStartX, currentObjectiveStartY))
             
             stepDirection = self.step_towards(spaceship_message.gps, currentObjective.end)
@@ -68,7 +70,9 @@ class PlayerSpaceship(Spaceship):
         nextTile = self.get_tile_in_direction(stepDirection, local_tiles)
         i = 0
         while (nextTile.type == TileType.WALL or nextTile.contains_spaceship) and i < 4:
+            print(f"Wrong direction: {stepDirection}")
             stepDirection = self.get_next_direction(stepDirection)
+            print(f"Testing direction: {stepDirection}")
             nextTile = self.get_tile_in_direction(stepDirection, local_tiles)
             i += 1
         return stepDirection
@@ -90,15 +94,15 @@ class PlayerSpaceship(Spaceship):
         return None
     
     def get_stream_from_coord(self, position: int):
-        bit1 = position % 25
-        bit2 = (position - bit1 * 25) % 5
-        bit3 = (bit1 - bit2 * 5)
-        ackitValues = ACKit.values
+        bit1 = int(position / 25)
+        bit2 = int((position - bit1 * 25) / 5)
+        bit3 = (position - bit1 * 25 - bit2 * 5)
+        ackitValues = [ACKit.TINKWINKI, ACKit.LALAR, ACKit.DISPI, ACKit.POHO, ACKit.NONONO]
         
         return [ackitValues[bit1], ackitValues[bit2], ackitValues[bit3]]
     
     def get_coord_from_stream(self, stream: List[ACKit]):
-        ackitValues = ACKit.values
+        ackitValues = [ACKit.TINKWINKI, ACKit.LALAR, ACKit.DISPI, ACKit.POHO, ACKit.NONONO]
         bit1 = ackitValues.index(stream[0])
         bit2 = ackitValues.index(stream[1])
         bit3 = ackitValues.index(stream[2])
@@ -148,7 +152,7 @@ class PlayerSpaceship(Spaceship):
         
     def get_command_duck(self, spaceship_message: SpaceshipMessage):
         # action = random.choice((Action.NORTH))
-        command = SpaceshipCommand(transmissions=[], memory=ACKStream([]), action=Action.NORTH)
+        command = SpaceshipCommand(transmissions=[], memory=ACKStream([]), action=None)
         print(f'Sending command {command}')
         
         assert(SpaceshipCommand.schema().validate(command.to_dict()) == {})
@@ -157,7 +161,7 @@ class PlayerSpaceship(Spaceship):
         
     def get_command_flamingo(self, spaceship_message: SpaceshipMessage):
         # action = random.choice((Action.NORTH))
-        command = SpaceshipCommand(transmissions=[], memory=ACKStream([]), action=Action.NORTH)
+        command = SpaceshipCommand(transmissions=[], memory=ACKStream([]), action=None)
         print(f'Sending command {command}')
         
         assert(SpaceshipCommand.schema().validate(command.to_dict()) == {})
@@ -166,7 +170,7 @@ class PlayerSpaceship(Spaceship):
         
     def get_command_albatross(self, spaceship_message: SpaceshipMessage):
         # action = self.find_landmark(spaceship_message)
-        command = SpaceshipCommand(transmissions=[], memory=ACKStream([]), action=Action.NORTH)
+        command = SpaceshipCommand(transmissions=[], memory=ACKStream([]), action=None)
         print(f'Sending command {command}')
 
         assert(SpaceshipCommand.schema().validate(command.to_dict()) == {})
