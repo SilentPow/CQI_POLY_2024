@@ -166,12 +166,39 @@ class PlayerSpaceship(Spaceship):
     
         
     def get_command_albatross(self, spaceship_message: SpaceshipMessage):
-        action = random.choice((Action.NORTH))
+        
+        
+        
+        
+        action = self.find_landmark(spaceship_message)
         command = SpaceshipCommand(transmissions=[], memory=ACKStream([]), action=action)
         print(f'Sending command {command}')
-        
+
         assert(SpaceshipCommand.schema().validate(command.to_dict()) == {})
         return command.to_json()
+
+    def find_landmark(self, spaceship_message: SpaceshipMessage):
+        if spaceship_message.can_see_landmark:
+            gps_coords = self.calculate_gps(spaceship_message.local_tiles)
+            
+        else:
+            action = random.choice((Action.NORTH, Action.WEST, Action.EAST))
+            
+    def calculate_gps(self, local_tiles: List[List[Tile]]):
+        for i in range(len(local_tiles)):
+            for j in range(len(local_tiles[i])):
+                if local_tiles[i][j].landmark != None:
+                    difference = Coords()
+                    difference.x = 3 - j
+                    difference.y = 3 - i
+                    
+                    true_coords = Coords()
+                    true_coords.x = difference.x + local_tiles[i][j].landmark.coords.x
+                    true_coords.y = difference.y + local_tiles[i][j].landmark.coords.y
+                    return true_coords
+                    
+        return None
+  
         
 class PlayerTower(Tower):
     def send_messages(self, game_message: str) -> str:
@@ -185,6 +212,21 @@ class PlayerTower(Tower):
         assert(TowerCommand.schema().validate(command.to_dict()) == {})
         return command.to_json()
         ########## Keep these lines ##########
+        
+class ACKConverter:
+    ACKIT_VALUES = ["TINKWINKI", "LALAR", "DISPI", "POHO", "NONONO"]
+
+    def ackit_to_number(ackit):
+        return ACKConverter.ACKIT_VALUES.index(ackit)
+
+    def ackstream_to_numbers(ackstream):
+        return [ACKConverter.ackit_to_number(ackit) for ackit in ackstream]
+
+    def number_to_ackit(number):
+        return ACKConverter.ACKIT_VALUES[number]
+
+    def numbers_to_ackstream(numbers):
+        return [ACKConverter.number_to_ackit(number) for number in numbers]
 
 ########## Keep these lines ##########
 if __name__ == '__main__':
