@@ -4,7 +4,6 @@ from ACKattaque.public.spaceship_command import SpaceshipCommand, Action
 from ACKattaque.public.spaceship_message import SpaceshipMessage, SpaceshipType
 from ACKattaque.public.tower import Tower
 from ACKattaque.public.tower_command import TowerCommand
-from logger import web_logger
 
 import random
 
@@ -34,8 +33,6 @@ class PlayerSpaceship(Spaceship):
         command = SpaceshipCommand(transmissions=[], memory=ACKStream([]), action=action)
         
         print(f'Sending command {command}')
-
-        web_logger({'command': f'{command}'})
 
         ######## Keep these lines #########
         assert(SpaceshipCommand.schema().validate(command.to_dict()) == {})
