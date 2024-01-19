@@ -148,12 +148,35 @@ class PlayerSpaceship(Spaceship):
     
         
     def get_command_albatross(self, spaceship_message: SpaceshipMessage):
-        action = random.choice((Action.NORTH))
+        action = self.find_landmark(spaceship_message)
         command = SpaceshipCommand(transmissions=[], memory=ACKStream([]), action=action)
         print(f'Sending command {command}')
-        
+
         assert(SpaceshipCommand.schema().validate(command.to_dict()) == {})
         return command.to_json()
+
+    def find_landmark(self, spaceship_message: SpaceshipMessage):
+        if spaceship_message.can_see_landmark:
+            gps_coords = self.calculate_gps(spaceship_message.local_tiles)
+            
+        else:
+            action = random.choice((Action.NORTH))
+            
+    def calculate_gps(self, local_tiles: List[List[Tile]]):
+        for i in range(len(local_tiles)):
+            for j in range(len(local_tiles[i])):
+                if local_tiles[i][j].landmark != None:
+                    difference = Coords()
+                    difference.x = 3 - j
+                    difference.y = 3 - i
+                    
+                    true_coords = Coords()
+                    true_coords.x = difference.x + local_tiles[i][j].landmark.coords.x
+                    true_coords.y = difference.y + local_tiles[i][j].landmark.coords.y
+                    return true_coords
+                    
+        return None
+        
         
 class PlayerTower(Tower):
     def send_messages(self, game_message: str) -> str:
