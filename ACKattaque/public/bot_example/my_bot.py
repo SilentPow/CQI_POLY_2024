@@ -75,7 +75,7 @@ class PlayerSpaceship(Spaceship):
     def take_step_in_direction(self, stepDirection: Action, local_tiles: List[List[Tile]]):
         nextTile = self.get_tile_in_direction(stepDirection, local_tiles)
         i = 0
-        while (nextTile.type == TileType.WALL or nextTile.contains_spaceship() or nextTile.contains_landmark()) and i < 4:
+        while (nextTile.type == TileType.WALL or nextTile.contains_spaceship() or nextTile.contains_landmark() or random.randint(0, 9) == 5) and i < 6:
             print(nextTile.type)
             print(nextTile.contains_spaceship)
             print(nextTile.contains_landmark)
@@ -87,14 +87,7 @@ class PlayerSpaceship(Spaceship):
         return stepDirection
         
     def get_next_direction(self, direction: Action):
-        if direction == Action.NORTH:
-            return Action.EAST
-        if direction == Action.EAST:
-            return Action.SOUTH
-        if direction == Action.SOUTH:
-            return Action.WEST
-        if direction == Action.WEST:
-            return Action.NORTH
+        return random.choice((Action.NORTH, Action.SOUTH, Action.EAST, Action.WEST))
     
     def get_objective_from_start_position(self, startPosition: Coords, objectives: List[Objective]):
         for objective in objectives:
