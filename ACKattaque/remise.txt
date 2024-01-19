@@ -1,0 +1,13 @@
+Compress only your bot files, not the entire folder.
+
+Structure example:
+
+yourbotname.zip
+├── __init__.py
+├── my_bot.py  // the file that will be called by run.sh, do not change the name
+├── run.sh  //the script that will open the bot's socket server, do not change the name
+├── ...
+├── your_other_game_files.py // any file or folder you want, just make sure to import and use it in my_bot.py
+├── your_other_game_folder   //
+│   ├── __init__.py          //
+│   ├── another_file.py      //
