@@ -1,4 +1,4 @@
-from ACKattaque.public.game_message import Coords, GameMessage, ACKStream, Objective, Tile, TileType
+from ACKattaque.public.game_message import ACKit, Coords, GameMessage, ACKStream, Objective, Tile, TileType
 from ACKattaque.public.spaceship import Spaceship
 from ACKattaque.public.spaceship_command import SpaceshipCommand, Action
 from ACKattaque.public.spaceship_message import SpaceshipMessage
@@ -31,26 +31,57 @@ class PlayerSpaceship(Spaceship):
         memory = spaceship_message.memory
         action = None
         
-        if not spaceship_message.carries_payload:
+        if spaceship_message.local_tiles[1][1].contains_pickup:
+            action = Action.PICKUP
+            memory[:3] = self.get_stream_from_coord(spaceship_message.gps.x)
+            memory[3:6] = self.get_stream_from_coord(spaceship_message.gps.y)
+            
+        elif not spaceship_message.carries_payload:
             objective = self.get_closest_objective_from(spaceship_message.gps, spaceship_message.objectives)
             stepDirection = self.step_towards(spaceship_message.gps, objective)
-            nextTile = self.get_tile_in_direction(stepDirection, spaceship_message.local_tiles)
+            self.take_step_in_direction(stepDirection, spaceship_message.local_tiles)
+        else:
+            currentObjectiveStartX = self.get_coord_from_stream(memory[:3])
+            currentObjectiveStartY = self.get_coord_from_stream(memory[3:6])
+            currentObjective = self.get_objective_from_start_position(Coords(currentObjectiveStartX, currentObjectiveStartY))
+            
+        
+        command = SpaceshipCommand(transmissions=[], memory=ACKStream(memory), action=action)
+        print(f'Sending command {command}')
+        
+        assert(SpaceshipCommand.schema().validate(command.to_dict()) == {})
+        return command.to_json()
+    
+    def take_step_in_direction(self, stepDirection: Action, local_tiles: List[List[Tile]]):
+            nextTile = self.get_tile_in_direction(stepDirection, local_tiles)
             while nextTile.type == TileType.WALL:
                 action_values = list(Action)
                 current_action_index = action_values.index(stepDirection)
                 next_index = (current_action_index + 1) % len(action_values)
                 stepDirection = action_values[next_index]
-                nextTile = self.get_tile_in_direction(stepDirection, spaceship_message.local_tiles)
-        else:
-                    
+                nextTile = self.get_tile_in_direction(stepDirection, local_tiles)
+    
+    def get_objective_from_start_position(self, startPosition: Coords, objectives: List[Objective]):
+        for objective in objectives:
+            if objective.start.x == startPosition.x and objective.start.y == startPosition.y:
+                return objective
+        return None
+    
+    def get_stream_from_coord(self, position: Coords):
+        bit1 = position % 25
+        bit2 = (position - bit1) % 5
+        bit3 = (bit1 - bit2)
+        ackitValues = ACKit.values
         
-            
+        return [ackitValues[bit1], ackitValues[bit2], ackitValues[bit3]]
+    
+    def get_coord_from_stream(self, stream: List[ACKit]):
+        ackitValues = ACKit.values
+        bit1 = ackitValues.index(stream[0])
+        bit2 = ackitValues.index(stream[1])
+        bit3 = ackitValues.index(stream[2])
         
-        command = SpaceshipCommand(transmissions=[], memory=ACKStream([]), action=action)
-        print(f'Sending command {command}')
-        
-        assert(SpaceshipCommand.schema().validate(command.to_dict()) == {})
-        return command.to_json()
+        return bit1 * 25 + bit2 * 5 + bit3
     
     def step_towards(self, startPosition: Coords, targetPosition: Coords):
         dx = abs(targetPosition.x - startPosition.x)
