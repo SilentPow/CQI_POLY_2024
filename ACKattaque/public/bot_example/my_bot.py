@@ -17,7 +17,7 @@ class PlayerSpaceship(Spaceship):
         print(f"Type: {spaceship_message.type}")
 
         if spaceship_message.type == SpaceshipType.HUMMINGBIRD: 
-            return self.get_command_hummingbird(spaceship_message)
+            return self.get_command_duck(spaceship_message)
         elif spaceship_message.type == SpaceshipType.DUCK:
             return self.get_command_duck(spaceship_message)
         elif spaceship_message.type == SpaceshipType.FLAMINGO: 
@@ -68,7 +68,7 @@ class PlayerSpaceship(Spaceship):
     def take_step_in_direction(self, stepDirection: Action, local_tiles: List[List[Tile]]):
         nextTile = self.get_tile_in_direction(stepDirection, local_tiles)
         i = 0
-        while nextTile.type == TileType.WALL or nextTile.contains_spaceship or 1 == 4:
+        while nextTile.type == TileType.WALL or nextTile.contains_spaceship or i == 4:
             stepDirection = self.get_next_direction(stepDirection)
             nextTile = self.get_tile_in_direction(stepDirection, local_tiles)
             i += 1
@@ -166,10 +166,6 @@ class PlayerSpaceship(Spaceship):
     
         
     def get_command_albatross(self, spaceship_message: SpaceshipMessage):
-        
-        
-        
-        
         action = self.find_landmark(spaceship_message)
         command = SpaceshipCommand(transmissions=[], memory=ACKStream([]), action=action)
         print(f'Sending command {command}')
