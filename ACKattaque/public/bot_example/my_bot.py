@@ -17,14 +17,12 @@ class PlayerSpaceship(Spaceship):
         print(f"Type: {spaceship_message.type}")
 
         if spaceship_message.type == SpaceshipType.HUMMINGBIRD: 
-            return self.get_command_duck(spaceship_message)
+            return self.get_command_hummingbird(spaceship_message)
         elif spaceship_message.type == SpaceshipType.DUCK:
             return self.get_command_duck(spaceship_message)
         elif spaceship_message.type == SpaceshipType.FLAMINGO: 
             return self.get_command_flamingo(spaceship_message)
         elif spaceship_message.type == SpaceshipType.ALBATROSS: 
-            return self.get_command_albatross(spaceship_message)
-        else:
             return self.get_command_albatross(spaceship_message)
             
         
@@ -36,27 +34,28 @@ class PlayerSpaceship(Spaceship):
         memory = spaceship_message.memory
         action = None
         
-        # if spaceship_message.local_tiles[1][1].contains_pickup:
-        #     action = Action.PICKUP
-        #     memory[:3] = self.get_stream_from_coord(spaceship_message.gps.x)
-        #     memory[3:6] = self.get_stream_from_coord(spaceship_message.gps.y)
-        #     print(f"Memory: {memory}")
-        # elif spaceship_message.local_tiles[1][1].contains_dropoff:
-        #     action = Action.DROP
-        # elif not spaceship_message.carries_payload:
-        objective = self.get_closest_objective_from(spaceship_message.gps, spaceship_message.objectives)
-        print(f"Objective: {objective.start}")
-        stepDirection = self.step_towards(spaceship_message.gps, objective.start)
-        print(f"Step: {stepDirection}")
-        action = self.take_step_in_direction(stepDirection, spaceship_message.local_tiles)
-        print(f"Action: {action}")
-        # else:
-        #     currentObjectiveStartX = self.get_coord_from_stream(memory[:3])
-        #     currentObjectiveStartY = self.get_coord_from_stream(memory[3:6])
-        #     currentObjective: Objective = self.get_objective_from_start_position(Coords(currentObjectiveStartX, currentObjectiveStartY))
+        if spaceship_message.local_tiles[1][1].contains_pickup:
+            action = Action.PICKUP
+            memory[:3] = self.get_stream_from_coord(spaceship_message.gps.x)
+            memory[3:6] = self.get_stream_from_coord(spaceship_message.gps.y)
+            print(f"Memory: {memory}")
+        elif spaceship_message.local_tiles[1][1].contains_dropoff:
+            print(f"Drop")
+            action = Action.DROP
+        elif not spaceship_message.carries_payload:
+            objective = self.get_closest_objective_from(spaceship_message.gps, spaceship_message.objectives)
+            print(f"Objective: {objective.start}")
+            stepDirection = self.step_towards(spaceship_message.gps, objective.start)
+            print(f"Step: {stepDirection}")
+            action = self.take_step_in_direction(stepDirection, spaceship_message.local_tiles)
+            print(f"Action: {action}")
+        else:
+            currentObjectiveStartX = self.get_coord_from_stream(memory[:3])
+            currentObjectiveStartY = self.get_coord_from_stream(memory[3:6])
+            currentObjective: Objective = self.get_objective_from_start_position(Coords(currentObjectiveStartX, currentObjectiveStartY))
             
-        #     stepDirection = self.step_towards(spaceship_message.gps, currentObjective.end)
-        #     action = self.take_step_in_direction(stepDirection, spaceship_message.local_tiles)
+            stepDirection = self.step_towards(spaceship_message.gps, currentObjective.end)
+            action = self.take_step_in_direction(stepDirection, spaceship_message.local_tiles)
             
         
         command = SpaceshipCommand(transmissions=[], memory=ACKStream(memory), action=action)
@@ -148,8 +147,8 @@ class PlayerSpaceship(Spaceship):
     
         
     def get_command_duck(self, spaceship_message: SpaceshipMessage):
-        action = random.choice((Action.NORTH))
-        command = SpaceshipCommand(transmissions=[], memory=ACKStream([]), action=action)
+        # action = random.choice((Action.NORTH))
+        command = SpaceshipCommand(transmissions=[], memory=ACKStream([]), action=Action.NORTH)
         print(f'Sending command {command}')
         
         assert(SpaceshipCommand.schema().validate(command.to_dict()) == {})
@@ -157,8 +156,8 @@ class PlayerSpaceship(Spaceship):
     
         
     def get_command_flamingo(self, spaceship_message: SpaceshipMessage):
-        action = random.choice((Action.NORTH))
-        command = SpaceshipCommand(transmissions=[], memory=ACKStream([]), action=action)
+        # action = random.choice((Action.NORTH))
+        command = SpaceshipCommand(transmissions=[], memory=ACKStream([]), action=Action.NORTH)
         print(f'Sending command {command}')
         
         assert(SpaceshipCommand.schema().validate(command.to_dict()) == {})
@@ -166,8 +165,8 @@ class PlayerSpaceship(Spaceship):
     
         
     def get_command_albatross(self, spaceship_message: SpaceshipMessage):
-        action = self.find_landmark(spaceship_message)
-        command = SpaceshipCommand(transmissions=[], memory=ACKStream([]), action=action)
+        # action = self.find_landmark(spaceship_message)
+        command = SpaceshipCommand(transmissions=[], memory=ACKStream([]), action=Action.NORTH)
         print(f'Sending command {command}')
 
         assert(SpaceshipCommand.schema().validate(command.to_dict()) == {})
