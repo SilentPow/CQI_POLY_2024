@@ -75,7 +75,10 @@ class PlayerSpaceship(Spaceship):
     def take_step_in_direction(self, stepDirection: Action, local_tiles: List[List[Tile]]):
         nextTile = self.get_tile_in_direction(stepDirection, local_tiles)
         i = 0
-        while (nextTile.type == TileType.WALL or nextTile.contains_spaceship or nextTile.contains_landmark) and i < 4:
+        while (nextTile.type == TileType.WALL or nextTile.contains_spaceship() or nextTile.contains_landmark()) and i < 4:
+            print(nextTile.type)
+            print(nextTile.contains_spaceship)
+            print(nextTile.contains_landmark)
             print(f"Wrong direction: {stepDirection}")
             stepDirection = self.get_next_direction(stepDirection)
             print(f"Testing direction: {stepDirection}")
