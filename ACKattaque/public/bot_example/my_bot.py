@@ -15,13 +15,13 @@ class PlayerSpaceship(Spaceship):
         ######## Keep these lines #########
 
         if spaceship_message.type == "HUMMINGBIRD": 
-            return self.get_command_hummingbird()
+            return self.get_command_hummingbird(spaceship_message)
         elif spaceship_message.type == "DUCK":
-            return self.get_command_duck()
+            return self.get_command_duck(spaceship_message)
         elif spaceship_message.type == "FLAMINGO": 
-            return self.get_command_flamingo()
+            return self.get_command_flamingo(spaceship_message)
         elif spaceship_message.type == "ALBATROSS": 
-            return self.get_command_albatross()
+            return self.get_command_albatross(spaceship_message)
         
 
         ######## Keep these lines #########
