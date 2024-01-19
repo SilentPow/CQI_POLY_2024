@@ -17,11 +17,11 @@ class PlayerSpaceship(Spaceship):
         if spaceship_message.type == "HUMMINGBIRD": 
             return self.get_command_hummingbird()
         elif spaceship_message.type == "DUCK":
-            return self.get_command_hummingbird()
+            return self.get_command_duck()
         elif spaceship_message.type == "FLAMINGO": 
-            return self.get_command_hummingbird()
+            return self.get_command_flamingo()
         elif spaceship_message.type == "ALBATROSS": 
-            return self.get_command_hummingbird()
+            return self.get_command_albatross()
         
 
         ######## Keep these lines #########
@@ -35,15 +35,19 @@ class PlayerSpaceship(Spaceship):
             action = Action.PICKUP
             memory[:3] = self.get_stream_from_coord(spaceship_message.gps.x)
             memory[3:6] = self.get_stream_from_coord(spaceship_message.gps.y)
-            
+        elif spaceship_message.local_tiles[1][1].contains_dropoff:
+            action = Action.DROP
         elif not spaceship_message.carries_payload:
             objective = self.get_closest_objective_from(spaceship_message.gps, spaceship_message.objectives)
             stepDirection = self.step_towards(spaceship_message.gps, objective)
-            self.take_step_in_direction(stepDirection, spaceship_message.local_tiles)
+            action = self.take_step_in_direction(stepDirection, spaceship_message.local_tiles)
         else:
             currentObjectiveStartX = self.get_coord_from_stream(memory[:3])
             currentObjectiveStartY = self.get_coord_from_stream(memory[3:6])
-            currentObjective = self.get_objective_from_start_position(Coords(currentObjectiveStartX, currentObjectiveStartY))
+            currentObjective: Objective = self.get_objective_from_start_position(Coords(currentObjectiveStartX, currentObjectiveStartY))
+            
+            stepDirection = self.step_towards(spaceship_message.gps, currentObjective.end)
+            action = self.take_step_in_direction(stepDirection, spaceship_message.local_tiles)
             
         
         command = SpaceshipCommand(transmissions=[], memory=ACKStream(memory), action=action)
@@ -55,11 +59,12 @@ class PlayerSpaceship(Spaceship):
     def take_step_in_direction(self, stepDirection: Action, local_tiles: List[List[Tile]]):
             nextTile = self.get_tile_in_direction(stepDirection, local_tiles)
             while nextTile.type == TileType.WALL:
-                action_values = list(Action)
+                action_values = Action.values
                 current_action_index = action_values.index(stepDirection)
                 next_index = (current_action_index + 1) % len(action_values)
                 stepDirection = action_values[next_index]
                 nextTile = self.get_tile_in_direction(stepDirection, local_tiles)
+            return stepDirection
     
     def get_objective_from_start_position(self, startPosition: Coords, objectives: List[Objective]):
         for objective in objectives:
@@ -125,7 +130,7 @@ class PlayerSpaceship(Spaceship):
     
         
     def get_command_duck(self, spaceship_message: SpaceshipMessage):
-        action = random.choice((Action.NORTH, Action.EAST, Action.SOUTH, Action.WEST))
+        action = random.choice((Action.NORTH))
         command = SpaceshipCommand(transmissions=[], memory=ACKStream([]), action=action)
         print(f'Sending command {command}')
         
@@ -134,7 +139,7 @@ class PlayerSpaceship(Spaceship):
     
         
     def get_command_flamingo(self, spaceship_message: SpaceshipMessage):
-        action = random.choice((Action.NORTH, Action.EAST, Action.SOUTH, Action.WEST))
+        action = random.choice((Action.NORTH))
         command = SpaceshipCommand(transmissions=[], memory=ACKStream([]), action=action)
         print(f'Sending command {command}')
         
@@ -143,7 +148,7 @@ class PlayerSpaceship(Spaceship):
     
         
     def get_command_albatross(self, spaceship_message: SpaceshipMessage):
-        action = random.choice((Action.NORTH, Action.EAST, Action.SOUTH, Action.WEST))
+        action = random.choice((Action.NORTH))
         command = SpaceshipCommand(transmissions=[], memory=ACKStream([]), action=action)
         print(f'Sending command {command}')
         
