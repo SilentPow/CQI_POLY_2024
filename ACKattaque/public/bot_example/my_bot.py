@@ -146,39 +146,80 @@ class PlayerSpaceship(Spaceship):
         assert(SpaceshipCommand.schema().validate(command.to_dict()) == {})
         return command.to_json()
     
+    
+    def find_action_from_mem(self, memory: List[ACKit], payload: bool):
+        xDir = memory[6]
+        yDir = memory[7]
+        xDir = ACKConverter.ackit_to_number(xDir)
+        yDir = ACKConverter.ackit_to_number(yDir)
+        
+        if xDir == 2 and yDir == 2:
+            if not payload:
+                return Action.PICKUP
+            else:
+                return Action.DROP
+        elif xDir != 2 and yDir == 2:
+            if xDir == 0:
+                return Action.EAST
+            else:
+                return Action.WEST
+        elif xDir == 2 and yDir != 2:
+            if yDir == 0:
+                return Action.SOUTH
+            else:
+                return Action.NORTH
+        else:
+            rand = random.randint(0,1)
+            if rand > 0.5:
+                if xDir == 0:
+                    return Action.EAST
+                else:
+                    return Action.WEST
+            else:
+                if yDir == 0:
+                    return Action.SOUTH
+                else:
+                    return Action.NORTH
+                
+    def make_random_choice(self):
+        rand = random.randint(0, 3)
+        actions = [Action.NORTH, Action.SOUTH, Action.EAST, Action.WEST]
+        return actions[rand]
+        
+    def get_closest_obj():
+        
         
     def get_command_albatross(self, spaceship_message: SpaceshipMessage):
-        gps = None
+        memory = []
+        action = None
         if not spaceship_message.can_see_landmark and len(spaceship_message.memory.value) == 0:
                 action = self.make_random_choice()
         if not spaceship_message.carries_payload:
             if spaceship_message.can_see_landmark:
                 gps = self.find_landmark(spaceship_message)
-                destination = self.get_closest_obj()
-                self.write_memory(gps, destination)
+                objective = self.get_closest_objective_from(gps, spaceship_message.objectives)
+                destination = objective.start
+                memory = self.write_memory(gps, destination)
+                new_destination = objective.end
             
-            action = self.find_action_from_mem()
+            action = self.find_action_from_mem(memory)
             
             if action == Action.PICKUP:
-                new_destination = self.get_obj_dest()
-                old_destination = self.get_old_dest()
-                self.write_memory(old_destination, new_destination)
+                if destination and new_destination:
+                    self.write_memory(destination, new_destination)
             
         else:
             if spaceship_message.can_see_landmark:
                 gps = self.find_landmark(spaceship_message)
                 destination = self.get_old_dest()
-                self.write_memory(gps, destination)
+                memory = self.write_memory(gps, destination)
                 
-            action = self.find_action_from_mem()
+            action = self.find_action_from_mem(memory)
             
-            if action == Action.PICKUP:
+            if action == Action.DROP:
                 new_destination = self.get_obj_dest()
                 old_destination = self.get_old_dest()
                 self.write_memory(old_destination, new_destination)
-            
-            
-            
         
           
         if not spaceship_message.carries_payload and not spaceship_message.local_tiles[3][3].contains_pickup:
