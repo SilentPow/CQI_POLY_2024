@@ -1,7 +1,7 @@
 from ACKattaque.public.game_message import ACKit, Coords, GameMessage, ACKStream, Objective, Tile, TileType
 from ACKattaque.public.spaceship import Spaceship
 from ACKattaque.public.spaceship_command import SpaceshipCommand, Action
-from ACKattaque.public.spaceship_message import SpaceshipMessage
+from ACKattaque.public.spaceship_message import SpaceshipMessage, SpaceshipType
 from ACKattaque.public.tower import Tower
 from ACKattaque.public.tower_command import TowerCommand
 from typing import List
@@ -13,15 +13,20 @@ class PlayerSpaceship(Spaceship):
         ######## Keep these lines #########        
         spaceship_message = SpaceshipMessage.from_json(spaceship_message)
         ######## Keep these lines #########
+        
+        print(f"Type: {spaceship_message.type}")
 
-        if spaceship_message.type == "HUMMINGBIRD": 
+        if spaceship_message.type == SpaceshipType.HUMMINGBIRD: 
             return self.get_command_hummingbird(spaceship_message)
-        elif spaceship_message.type == "DUCK":
+        elif spaceship_message.type == SpaceshipType.DUCK:
             return self.get_command_duck(spaceship_message)
-        elif spaceship_message.type == "FLAMINGO": 
+        elif spaceship_message.type == SpaceshipType.FLAMINGO: 
             return self.get_command_flamingo(spaceship_message)
-        elif spaceship_message.type == "ALBATROSS": 
+        elif spaceship_message.type == SpaceshipType.ALBATROSS: 
             return self.get_command_albatross(spaceship_message)
+        else:
+            return self.get_command_albatross(spaceship_message)
+            
         
 
         ######## Keep these lines #########
@@ -31,23 +36,27 @@ class PlayerSpaceship(Spaceship):
         memory = spaceship_message.memory
         action = None
         
-        if spaceship_message.local_tiles[1][1].contains_pickup:
-            action = Action.PICKUP
-            memory[:3] = self.get_stream_from_coord(spaceship_message.gps.x)
-            memory[3:6] = self.get_stream_from_coord(spaceship_message.gps.y)
-        elif spaceship_message.local_tiles[1][1].contains_dropoff:
-            action = Action.DROP
-        elif not spaceship_message.carries_payload:
-            objective = self.get_closest_objective_from(spaceship_message.gps, spaceship_message.objectives)
-            stepDirection = self.step_towards(spaceship_message.gps, objective)
-            action = self.take_step_in_direction(stepDirection, spaceship_message.local_tiles)
-        else:
-            currentObjectiveStartX = self.get_coord_from_stream(memory[:3])
-            currentObjectiveStartY = self.get_coord_from_stream(memory[3:6])
-            currentObjective: Objective = self.get_objective_from_start_position(Coords(currentObjectiveStartX, currentObjectiveStartY))
+        # if spaceship_message.local_tiles[1][1].contains_pickup:
+        #     action = Action.PICKUP
+        #     memory[:3] = self.get_stream_from_coord(spaceship_message.gps.x)
+        #     memory[3:6] = self.get_stream_from_coord(spaceship_message.gps.y)
+        #     print(f"Memory: {memory}")
+        # elif spaceship_message.local_tiles[1][1].contains_dropoff:
+        #     action = Action.DROP
+        # elif not spaceship_message.carries_payload:
+        objective = self.get_closest_objective_from(spaceship_message.gps, spaceship_message.objectives)
+        print(f"Objective: {objective.start}")
+        stepDirection = self.step_towards(spaceship_message.gps, objective.start)
+        print(f"Step: {stepDirection}")
+        action = self.take_step_in_direction(stepDirection, spaceship_message.local_tiles)
+        print(f"Action: {action}")
+        # else:
+        #     currentObjectiveStartX = self.get_coord_from_stream(memory[:3])
+        #     currentObjectiveStartY = self.get_coord_from_stream(memory[3:6])
+        #     currentObjective: Objective = self.get_objective_from_start_position(Coords(currentObjectiveStartX, currentObjectiveStartY))
             
-            stepDirection = self.step_towards(spaceship_message.gps, currentObjective.end)
-            action = self.take_step_in_direction(stepDirection, spaceship_message.local_tiles)
+        #     stepDirection = self.step_towards(spaceship_message.gps, currentObjective.end)
+        #     action = self.take_step_in_direction(stepDirection, spaceship_message.local_tiles)
             
         
         command = SpaceshipCommand(transmissions=[], memory=ACKStream(memory), action=action)
@@ -57,14 +66,23 @@ class PlayerSpaceship(Spaceship):
         return command.to_json()
     
     def take_step_in_direction(self, stepDirection: Action, local_tiles: List[List[Tile]]):
+        nextTile = self.get_tile_in_direction(stepDirection, local_tiles)
+        i = 0
+        while nextTile.type == TileType.WALL or nextTile.contains_spaceship or 1 == 4:
+            stepDirection = self.get_next_direction(stepDirection)
             nextTile = self.get_tile_in_direction(stepDirection, local_tiles)
-            while nextTile.type == TileType.WALL:
-                action_values = Action.values
-                current_action_index = action_values.index(stepDirection)
-                next_index = (current_action_index + 1) % len(action_values)
-                stepDirection = action_values[next_index]
-                nextTile = self.get_tile_in_direction(stepDirection, local_tiles)
-            return stepDirection
+            i += 1
+        return stepDirection
+        
+    def get_next_direction(self, direction: Action):
+        if direction == Action.NORTH:
+            return Action.EAST
+        if direction == Action.EAST:
+            return Action.SOUTH
+        if direction == Action.SOUTH:
+            return Action.WEST
+        if direction == Action.WEST:
+            return Action.NORTH
     
     def get_objective_from_start_position(self, startPosition: Coords, objectives: List[Objective]):
         for objective in objectives:
