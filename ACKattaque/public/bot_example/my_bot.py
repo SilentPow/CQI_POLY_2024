@@ -56,7 +56,7 @@ class PlayerSpaceship(Spaceship):
         assert(SpaceshipCommand.schema().validate(command.to_dict()) == {})
         return command.to_json()
     
-    def take_step_in_direction(self, stepDirection: Action, local_tiles: List[List[Tile]]):
+    def take_step_in_direction(self, stepDirection: Action, local_tiles: List[List[Tile]]) -> Action:
             nextTile = self.get_tile_in_direction(stepDirection, local_tiles)
             while nextTile.type == TileType.WALL:
                 action_values = Action.values
@@ -66,13 +66,13 @@ class PlayerSpaceship(Spaceship):
                 nextTile = self.get_tile_in_direction(stepDirection, local_tiles)
             return stepDirection
     
-    def get_objective_from_start_position(self, startPosition: Coords, objectives: List[Objective]):
+    def get_objective_from_start_position(self, startPosition: Coords, objectives: List[Objective]) -> Objective:
         for objective in objectives:
             if objective.start.x == startPosition.x and objective.start.y == startPosition.y:
                 return objective
         return None
     
-    def get_stream_from_coord(self, position: Coords):
+    def get_stream_from_coord(self, position: Coords) -> List[ACKit]:
         bit1 = position % 25
         bit2 = (position - bit1) % 5
         bit3 = (bit1 - bit2)
@@ -80,7 +80,7 @@ class PlayerSpaceship(Spaceship):
         
         return [ackitValues[bit1], ackitValues[bit2], ackitValues[bit3]]
     
-    def get_coord_from_stream(self, stream: List[ACKit]):
+    def get_coord_from_stream(self, stream: List[ACKit]) -> Coords:
         ackitValues = ACKit.values
         bit1 = ackitValues.index(stream[0])
         bit2 = ackitValues.index(stream[1])
@@ -88,7 +88,7 @@ class PlayerSpaceship(Spaceship):
         
         return bit1 * 25 + bit2 * 5 + bit3
     
-    def step_towards(self, startPosition: Coords, targetPosition: Coords):
+    def step_towards(self, startPosition: Coords, targetPosition: Coords) -> Action:
         dx = abs(targetPosition.x - startPosition.x)
         dy = abs(targetPosition.y - startPosition.y)
         
@@ -103,7 +103,7 @@ class PlayerSpaceship(Spaceship):
             else:
                 return Action.NORTH
             
-    def get_tile_in_direction(self, direction: Action, local_tiles: List[List[Tile]]):
+    def get_tile_in_direction(self, direction: Action, local_tiles: List[List[Tile]]) -> Tile:
         if direction == Action.NORTH:
             return local_tiles[0][1] 
         if direction == Action.SOUTH:
@@ -114,15 +114,15 @@ class PlayerSpaceship(Spaceship):
             return local_tiles[1][0] 
         
             
-    def get_closest_objective_from(self, position: Coords, objectives: List[Objective]):
+    def get_closest_objective_from(self, position: Coords, objectives: List[Objective]) -> Objective:
         objectiveDistances = []
         for objective in objectives:
             objectiveDistances.append(self.get_travelling_distance(position, objective.start))
             
-        return objectiveDistances.index(min(objectiveDistances))
+        return objectives[objectiveDistances.index(min(objectiveDistances))]
             
             
-    def get_travelling_distance(position1: Coords, position2: Coords):
+    def get_travelling_distance(self, position1: Coords, position2: Coords) -> int:
         dx = abs(position1.x - position2.x)
         dy = abs(position1.y - position2.y)
         
