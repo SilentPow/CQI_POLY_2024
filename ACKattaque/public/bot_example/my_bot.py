@@ -148,7 +148,7 @@ class PlayerSpaceship(Spaceship):
     
         
     def get_command_albatross(self, spaceship_message: SpaceshipMessage):
-        if spaceship_message.memory
+        
         
         
         
