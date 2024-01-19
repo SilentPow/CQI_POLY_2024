@@ -19,15 +19,12 @@ def get_next_direction(current_pos: Coords, target_pos: Coords, carries_payload:
         return Action.SOUTH
     else:
         return Action.PICKUP if not carries_payload else Action.DROP
-    
 
 class PlayerSpaceship(Spaceship):
     def get_command(self, spaceship_message: str) -> str:
-        ######## Keep these lines #########        
+        ######## Keep these lines #########
         spaceship_message = SpaceshipMessage.from_json(spaceship_message)
         ######## Keep these lines #########
-
-        web_logger({'from': 'spaceship'})
 
         if spaceship_message.type == SpaceshipType.HUMMINGBIRD:
             objective = spaceship_message.objectives[-2]
