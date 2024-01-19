@@ -33,17 +33,23 @@ class PlayerSpaceship(Spaceship):
     def get_command_hummingbird(self, spaceship_message: SpaceshipMessage):
         memory = spaceship_message.memory
         action = None
-        
+        print(f"Carries payload: {spaceship_message.carries_payload}")
         if spaceship_message.local_tiles[1][1].contains_pickup and not spaceship_message.carries_payload:
             action = Action.PICKUP
             memoryList = memory.value
             memoryList[:3] = self.get_stream_from_coord(spaceship_message.gps.x)
             memoryList[3:6] = self.get_stream_from_coord(spaceship_message.gps.y)
-            memory = memoryList
+            memory = ACKStream(memoryList)
             print(f"Memory: {memory}")
-        elif spaceship_message.local_tiles[1][1].contains_dropoff:
+        elif spaceship_message.local_tiles[1][1].contains_dropoff and spaceship_message.carries_payload:
+            currentObjectiveStartX = self.get_coord_from_stream(memory.value[:3])
+            currentObjectiveStartY = self.get_coord_from_stream(memory.value[3:6])
+            currentObjective: Objective = self.get_objective_from_start_position(Coords(currentObjectiveStartX, currentObjectiveStartY), spaceship_message.objectives)
             print(f"Drop")
-            action = Action.DROP
+            if (spaceship_message.gps.x == currentObjective.end.x and spaceship_message.gps.y == currentObjective.end.y):
+                action = Action.DROP
+            else:
+                action = Action.NORTH
         elif not spaceship_message.carries_payload:
             objective = self.get_closest_objective_from(spaceship_message.gps, spaceship_message.objectives)
             print(f"Objective: {objective.start}")
@@ -54,7 +60,7 @@ class PlayerSpaceship(Spaceship):
         else:
             currentObjectiveStartX = self.get_coord_from_stream(memory.value[:3])
             currentObjectiveStartY = self.get_coord_from_stream(memory.value[3:6])
-            currentObjective: Objective = self.get_objective_from_start_position(Coords(currentObjectiveStartX, currentObjectiveStartY))
+            currentObjective: Objective = self.get_objective_from_start_position(Coords(currentObjectiveStartX, currentObjectiveStartY), spaceship_message.objectives)
             
             stepDirection = self.step_towards(spaceship_message.gps, currentObjective.end)
             action = self.take_step_in_direction(stepDirection, spaceship_message.local_tiles)
@@ -69,7 +75,7 @@ class PlayerSpaceship(Spaceship):
     def take_step_in_direction(self, stepDirection: Action, local_tiles: List[List[Tile]]):
         nextTile = self.get_tile_in_direction(stepDirection, local_tiles)
         i = 0
-        while (nextTile.type == TileType.WALL or nextTile.contains_spaceship) and i < 4:
+        while (nextTile.type == TileType.WALL or nextTile.contains_spaceship or nextTile.contains_landmark) and i < 4:
             print(f"Wrong direction: {stepDirection}")
             stepDirection = self.get_next_direction(stepDirection)
             print(f"Testing direction: {stepDirection}")
